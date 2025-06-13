@@ -1,8 +1,28 @@
-const express = require("express");
-const app = express();
+import express from "express"
+import "dotenv/config"
+import cors from "cors"
+import connectDB from "./configs/db.js"
+import { clerkMiddleware } from "@clerk/express"
+import clerkWebHooks from "./controllers/clerkWebHooks.js"
 
-app.get("/", (req, res) => res.send("Express on Vercel"));
+connectDB()
 
-app.listen(3000, () => console.log("Server ready on port 3000."));
+const app = express()
+app.use(cors()) // Enable Cross-Origin Resource Sharing
 
-module.exports = app;
+
+// Middleware
+app.use(express.json()) // Parse JSON request bodies
+app.use(clerkMiddleware()) // Use Clerk middleware for authentication
+
+// API to listen to Clerk webhooks
+app.use('/api/clerk', clerkWebHooks)
+
+app.get('/', (req, res)=> res.send('API is working'))
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+})
+
