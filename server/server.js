@@ -22,4 +22,5 @@ app.get('/', (req, res)=> res.send('API is working'))
 
 const PORT = process.env.PORT || 3000;
 
-export default app;
+module.exports = app;
+
