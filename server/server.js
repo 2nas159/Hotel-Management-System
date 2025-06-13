@@ -10,6 +10,7 @@ connectDB()
 const app = express()
 app.use(cors()) // Enable Cross-Origin Resource Sharing
 
+
 // Middleware
 app.use(express.json()) // Parse JSON request bodies
 app.use(clerkMiddleware()) // Use Clerk middleware for authentication
