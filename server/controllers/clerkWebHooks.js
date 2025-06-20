@@ -17,37 +17,29 @@ const clerkWebHooks = async (req, res) => {
     // Getting data from the request body
     const { data, type } = req.body;
 
-    // Defensive check for email_addresses
-    const email =
-      Array.isArray(data.email_addresses) &&
-      data.email_addresses.length > 0 &&
-      data.email_addresses[0].email_address
-        ? data.email_addresses[0].email_address
-        : null;
-
-    if (!email) {
-      console.log("No email found in webhook data:", data);
-      return res
-        .status(400)
-        .json({ success: false, message: "No email found in webhook data" });
-    }
-
-    const userData = {
-      _id: data.id,
-      email: email,
-      username: data.first_name + " " + data.last_name,
-      image: data.image_url,
-    };
-
     // Switch Cases for different Events
     switch (type) {
-      case "user.created":
+      case "user.created": {
+        const userData = {
+          _id: data.id,
+          email: email,
+          username: data.first_name + " " + data.last_name,
+          image: data.image_url,
+        };
         await User.create(userData);
         break;
+      }
 
-      case "user.updated":
+      case "user.updated": {
+        const userData = {
+          _id: data.id,
+          email: email,
+          username: data.first_name + " " + data.last_name,
+          image: data.image_url,
+        };
         await User.findByIdAndUpdate(data.id, userData);
         break;
+      }
 
       case "user.deleted":
         await User.findByIdAndDelete(data.id);
