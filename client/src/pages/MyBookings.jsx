@@ -66,7 +66,7 @@ const MyBookings = () => {
 
         {bookings.map((booking) => (
           <div
-            key={booking.id}
+            key={booking._id}
             className="grid grid-cols-1 md:grid-cols-[3fr_2fr_1fr] w-full border-b border-gray-300 py-6 first:border-t"
           >
             {/* Room Details */}
@@ -126,7 +126,7 @@ const MyBookings = () => {
                     booking.isPaid ? "text-green-500" : "text-red-500"
                   }`}
                 >
-                  {booking.isPaid ? "Paid" : "Not Paid"}
+                  {booking.isPaid ? "Paid" : "Unpaid"}
                 </p>
               </div>
               {!booking.isPaid && (

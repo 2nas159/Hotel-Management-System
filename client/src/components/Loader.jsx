@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 const Loader = () => {
   const { navigate } = useAppContext();
   const { nextUrl } = useParams();
+  
   useEffect(() => {
     if (nextUrl) {
       setTimeout(() => {
