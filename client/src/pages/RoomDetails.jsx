@@ -4,6 +4,9 @@ import { assets, facilityIcons, roomCommonData } from "../assets/assets";
 import StarRating from "../components/StarRating";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
+import BookingProgressSteps from "../components/BookingProgressSteps";
+import { validateBookingForm, sanitizeInput } from "../utils/formValidator";
+import LazyImage from "../components/LazyImage";
 
 const RoomDetails = () => {
   const { id } = useParams();
@@ -13,24 +16,35 @@ const RoomDetails = () => {
   const [checkInDate, setCheckInDate] = useState(null);
   const [checkOutDate, setCheckOutDate] = useState(null);
   const [guests, setGuests] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingStep, setBookingStep] = useState(1);
+  const [formErrors, setFormErrors] = useState({});
 
   const [isAvailable, setIsAvailable] = useState(false);
 
   const checkAvailability = async () => {
     try {
+      setIsLoading(true);
+      setBookingStep(1);
+      
       // Check if checkInDate is grater than CheckOutDate
       if (checkInDate >= checkOutDate) {
-        alert("Check-Out date must be after Check-In date.");
+        toast.error("Check-Out date must be after Check-In date.");
+        setIsLoading(false);
         return;
       }
+      
       const { data } = await axios.post("/api/bookings/check-availability", {
         room: id,
         checkInDate,
         checkOutDate,
       });
+      
       if (data.success) {
         if (data.isAvailable) {
           setIsAvailable(true);
+          setBookingStep(2);
           toast.success("Room is available for booking!");
         } else {
           setIsAvailable(false);
@@ -41,6 +55,9 @@ const RoomDetails = () => {
       }
     } catch (error) {
       console.error("Error checking room availability:", error);
+      toast.error("Error checking availability. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -48,32 +65,56 @@ const RoomDetails = () => {
   const onSubmitHandler = async (e) => {
     try {
       e.preventDefault();
+      setFormErrors({});
+      
+      // Validate form data
+      const formData = {
+        checkInDate,
+        checkOutDate,
+        guests: parseInt(guests)
+      };
+      
+      const validation = validateBookingForm(formData);
+      if (!validation.isValid) {
+        setFormErrors(validation.errors);
+        toast.error("Please fix the form errors before proceeding");
+        return;
+      }
+      
       if (!isAvailable) {
         return checkAvailability();
       } else {
+        setIsBooking(true);
+        setBookingStep(3);
+        
         const { data } = await axios.post(
           "/api/bookings/book",
           {
             room: id,
             checkInDate,
             checkOutDate,
-            guests,
-            paymentMethod: "Pay At Hotel",
+            guests: parseInt(guests),
           },
           {
             headers: { Authorization: `Bearer ${await getToken()}` },
           }
         );
+        
         if (data.success) {
-          toast.success(data.message);
-          navigate("/my-bookings");
-          scrollTo(0, 0);
+          setBookingStep(4);
+          toast.success("Booking created! Please complete payment to confirm your reservation.");
+          setTimeout(() => {
+            navigate("/my-bookings");
+            scrollTo(0, 0);
+          }, 2000);
         } else {
           toast.error(data.message);
         }
       }
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setIsBooking(false);
     }
   };
 
@@ -113,7 +154,7 @@ const RoomDetails = () => {
         {/* Room Images */}
         <div className="flex flex-col lg:flex-row mt-6 gap-6">
           <div className="lg:w-1/2 w-full">
-            <img
+            <LazyImage
               src={mainImage}
               alt="room-main"
               className="w-full rounded-xl object-cover shadow-lg"
@@ -122,7 +163,7 @@ const RoomDetails = () => {
           <div className="grid grid-cols-2 gap-4 lg:w-1/2 w-full">
             {room?.images.length > 1 &&
               room.images.map((image, index) => (
-                <img
+                <LazyImage
                   key={index}
                   src={image}
                   alt={`room-${index}`}
@@ -161,6 +202,16 @@ const RoomDetails = () => {
           <p className="text-2xl font-medium">${room.pricePerNight}/night</p>
         </div>
 
+        {/* Booking Progress Steps */}
+        {(isLoading || isBooking || isAvailable) && (
+          <div className="mt-16">
+            <BookingProgressSteps 
+              currentStep={bookingStep} 
+              isLoading={isLoading || isBooking}
+            />
+          </div>
+        )}
+
         {/* CheckIn CheckOut Form */}
         <form
           onSubmit={onSubmitHandler}
@@ -172,14 +223,24 @@ const RoomDetails = () => {
                 Check-In
               </label>
               <input
-                onChange={(e) => setCheckInDate(e.target.value)}
+                onChange={(e) => {
+                  setCheckInDate(e.target.value);
+                  if (formErrors.checkInDate) {
+                    setFormErrors(prev => ({ ...prev, checkInDate: null }));
+                  }
+                }}
                 min={new Date().toISOString().split("T")[0]}
                 type="date"
                 id="checkInDate"
                 placeholder="Check-In"
-                className="w-full rounded border border-gray-300 px-3 py-2 mt-1.5 outline-none"
+                className={`w-full rounded border px-3 py-2 mt-1.5 outline-none ${
+                  formErrors.checkInDate ? 'border-red-500' : 'border-gray-300'
+                }`}
                 required
               />
+              {formErrors.checkInDate && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.checkInDate}</p>
+              )}
             </div>
 
             <div className="w-px h-15 bg-gray-300/70 max-md:hidden"></div>
@@ -189,15 +250,25 @@ const RoomDetails = () => {
                 Check-Out
               </label>
               <input
-                onChange={(e) => setCheckOutDate(e.target.value)}
+                onChange={(e) => {
+                  setCheckOutDate(e.target.value);
+                  if (formErrors.checkOutDate) {
+                    setFormErrors(prev => ({ ...prev, checkOutDate: null }));
+                  }
+                }}
                 min={checkInDate}
                 disabled={!checkInDate}
                 type="date"
                 id="checkOutDate"
                 placeholder="Check-Out"
-                className="w-full rounded border border-gray-300 px-3 py-2 mt-1.5 outline-none"
+                className={`w-full rounded border px-3 py-2 mt-1.5 outline-none ${
+                  formErrors.checkOutDate ? 'border-red-500' : 'border-gray-300'
+                }`}
                 required
               />
+              {formErrors.checkOutDate && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.checkOutDate}</p>
+              )}
             </div>
 
             <div className="w-px h-15 bg-gray-300/70 max-md:hidden"></div>
@@ -207,22 +278,38 @@ const RoomDetails = () => {
                 Guests
               </label>
               <input
-                onChange={(e) => setGuests(e.target.value)}
+                onChange={(e) => {
+                  setGuests(e.target.value);
+                  if (formErrors.guests) {
+                    setFormErrors(prev => ({ ...prev, guests: null }));
+                  }
+                }}
                 value={guests}
                 type="number"
                 id="guests"
                 placeholder="1"
-                className="max-w-20 rounded border border-gray-300 px-3 py-2 mt-1.5 outline-none"
+                min="1"
+                max="10"
+                className={`max-w-20 rounded border px-3 py-2 mt-1.5 outline-none ${
+                  formErrors.guests ? 'border-red-500' : 'border-gray-300'
+                }`}
                 required
               />
+              {formErrors.guests && (
+                <p className="text-red-500 text-xs mt-1">{formErrors.guests}</p>
+              )}
             </div>
           </div>
           {/* Submit Button */}
           <button
             type="submit"
-            className="bg-blue-500 hover:bg-blue-600 active:scale-95 transition-all text-white rounded-md max-md:w-full max-md:mt-6 md:px-25 py-3 md:py-4 text-base cursor-pointer"
+            disabled={isLoading || isBooking}
+            className="bg-blue-500 hover:bg-blue-600 active:scale-95 transition-all text-white rounded-md max-md:w-full max-md:mt-6 md:px-25 py-3 md:py-4 text-base cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {isAvailable ? "Book Now" : "Check Availability"}
+            {(isLoading || isBooking) && (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            )}
+            {isLoading ? "Checking..." : isBooking ? "Creating Booking..." : isAvailable ? "Book & Pay Now" : "Check Availability"}
           </button>
         </form>
 

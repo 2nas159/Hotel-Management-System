@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { assets, cities } from "../assets/assets";
 import { useAppContext } from "../context/AppContext";
+import SearchSuggestions from "./SearchSuggestions";
 
 const Hero = () => {
-  const { navigate, getToken, axios, setSearchedCities } = useAppContext();
+  const { navigate, getToken, axios, setSearchedCities, searchedCities } = useAppContext();
   const [destination, setDestination] = useState("");
 
   const onSearch = async (e) => {
@@ -47,20 +48,16 @@ const Hero = () => {
             <img src={assets.calenderIcon} alt="calendar" className="h-4" />
             <label htmlFor="destinationInput">Destination</label>
           </div>
-          <input
-            onChange={(e) => setDestination(e.target.value)}
-            list="destinations"
-            id="destinationInput"
-            type="text"
-            className=" rounded border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none"
+          <SearchSuggestions
+            value={destination}
+            onChange={setDestination}
+            onSelect={(selectedDestination) => {
+              setDestination(selectedDestination);
+            }}
             placeholder="Type here"
-            required
+            recentSearches={searchedCities}
+            popularDestinations={cities}
           />
-          <datalist id="destinations">
-            {cities.map((city, index) => (
-              <option key={index} value={city} />
-            ))}
-          </datalist>
         </div>
 
         <div>

@@ -100,7 +100,9 @@ export const testimonials = [
 // Facility Icon
 export const facilityIcons = {
     "Free WiFi": assets.freeWifiIcon,
+    "Free Wifi": assets.freeWifiIcon,
     "Free Breakfast": assets.freeBreakfastIcon,
+    "Breakfast Included": assets.freeBreakfastIcon,
     "Room Service": assets.roomServiceIcon,
     "Mountain View": assets.mountainIcon,
     "Pool Access": assets.poolIcon,

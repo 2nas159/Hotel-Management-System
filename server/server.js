@@ -9,7 +9,10 @@ import hotelRouter from "./routes/hotelRoutes.js";
 import connectCloudinary from "./configs/cloudinary.js";
 import roomRouter from "./routes/roomRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
-import { stripeWebHooks } from "./controllers/stripeWebHooks.js";
+import reviewRouter from "./routes/reviewRoutes.js";
+import analyticsRouter from "./routes/analyticsRoutes.js";
+import { stripeWebHooks, testWebhook } from "./controllers/stripeWebHooks.js";
+import { cancelUnpaidBookings, fixAllPaidBookings } from "./controllers/bookingController.js";
 
 connectDB();
 connectCloudinary();
@@ -24,6 +27,9 @@ app.post(
   stripeWebHooks
 );
 
+// Test endpoint for webhook debugging
+app.get("/api/stripe/test", testWebhook);
+
 // Middleware
 app.use(express.json()); // Parse JSON request bodies
 app.use(clerkMiddleware()); // Use Clerk middleware for authentication
@@ -36,9 +42,31 @@ app.use("/api/user", userRouter);
 app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
+app.use("/api/reviews", reviewRouter);
+app.use("/api/analytics", analyticsRouter);
 
 const PORT = process.env.PORT || 3000;
 
+// Set up automatic cleanup of unpaid bookings every hour
+setInterval(() => {
+  console.log("Running cleanup for unpaid bookings...");
+  cancelUnpaidBookings();
+}, 60 * 60 * 1000); // Run every hour
+
+// Set up automatic fix for paid bookings every 30 minutes
+setInterval(() => {
+  console.log("Running fix for paid bookings...");
+  fixAllPaidBookings();
+}, 30 * 60 * 1000); // Run every 30 minutes
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log("Automatic cleanup for unpaid bookings scheduled every hour");
+  console.log("Automatic fix for paid bookings scheduled every 30 minutes");
+  
+  // Run initial fixes on startup
+  setTimeout(() => {
+    console.log("Running initial fixes on startup...");
+    fixAllPaidBookings();
+  }, 5000); // Wait 5 seconds for database connection
 });

@@ -17,9 +17,11 @@ const bookingSchema = new mongoose.Schema(
     paymentMethod: {
       type: String,
       required: true,
-      default: "Pay At Hotel",
+      default: "Stripe",
     },
     isPaid: { type: Boolean, default: false },
+    cancellationReason: { type: String },
+    cancelledAt: { type: Date },
   },
   { timestamps: true }
 );

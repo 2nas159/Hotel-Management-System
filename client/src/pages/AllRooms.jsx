@@ -1,8 +1,14 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { assets, facilityIcons, roomsDummyData } from "../assets/assets";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import StarRating from "../components/StarRating";
 import { useAppContext } from "../context/AppContext";
+import SearchResultsSkeleton from "../components/SearchResultsSkeleton";
+import PriceRangeSlider from "../components/PriceRangeSlider";
+import AmenityFilter from "../components/AmenityFilter";
+import StarRatingFilter from "../components/StarRatingFilter";
+import GuestCapacityFilter from "../components/GuestCapacityFilter";
+import LazyImage from "../components/LazyImage";
 
 const CheckBox = ({ label, selected = false, onChange = () => {} }) => (
   <label className="flex items-center gap-3 cursor-pointer mt-2 text-sm">
@@ -31,14 +37,18 @@ const RadioButton = ({ label, selected = false, onChange = () => {} }) => (
 
 const AllRooms = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { rooms, navigate, currency } = useAppContext();
+  const { rooms, navigate, currency, fetchRooms } = useAppContext();
 
   const [openFilters, setOpenFilters] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState({
     roomTypes: [],
-    priceRanges: [],
+    priceRange: [0, 3000],
+    amenities: [],
+    starRating: 0,
+    guestCapacity: 0,
   });
   const [selectedSort, setSelectedSort] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const roomTypes = ["Single Bed", "Double Bed", "Luxury Room", "Family Suite"];
   const priceRanges = [
@@ -82,15 +92,34 @@ const AllRooms = () => {
     );
   };
 
-  // Function to filter rooms based on price ranges
-  const matchesPriceRanges = (room) => {
+  // Function to filter rooms based on price range
+  const matchesPriceRange = (room) => {
+    const [minPrice, maxPrice] = selectedFilters.priceRange;
+    return room.pricePerNight >= minPrice && room.pricePerNight <= maxPrice;
+  };
+
+  // Function to filter rooms based on amenities
+  const matchesAmenities = (room) => {
     return (
-      selectedFilters.priceRanges.length === 0 ||
-      selectedFilters.priceRanges.some((range) => {
-        const [min, max] = range.split(" to ").map(Number);
-        return room.pricePerNight >= min && room.pricePerNight <= max;
-      })
+      selectedFilters.amenities.length === 0 ||
+      selectedFilters.amenities.every(amenity => 
+        room.amenities.includes(amenity)
+      )
     );
+  };
+
+  // Function to filter rooms based on star rating (placeholder - would need actual rating data)
+  const matchesStarRating = (room) => {
+    // For now, return true as we don't have actual star ratings in the data
+    // This would be implemented when we add the review system
+    return true;
+  };
+
+  // Function to filter rooms based on guest capacity (placeholder - would need actual capacity data)
+  const matchesGuestCapacity = (room) => {
+    // For now, return true as we don't have guest capacity in the current room model
+    // This would be implemented when we add capacity to the room model
+    return true;
   };
 
   // Function to sort rooms based on the selected sort option
@@ -116,17 +145,40 @@ const AllRooms = () => {
   const filteredRooms = useMemo(() => {
     return rooms
       .filter((room) => matchesRoomTypes(room))
-      .filter((room) => matchesPriceRanges(room))
+      .filter((room) => matchesPriceRange(room))
+      .filter((room) => matchesAmenities(room))
+      .filter((room) => matchesStarRating(room))
+      .filter((room) => matchesGuestCapacity(room))
       .filter((room) => filterDestination(room))
       .sort(sortRooms);
   }, [rooms, selectedFilters, selectedSort, searchParams]);
 
   // Clear filters and sort
   const clearFilters = () => {
-    setSelectedFilters({ roomTypes: [], priceRanges: [] });
+    setSelectedFilters({ 
+      roomTypes: [], 
+      priceRange: [0, 3000],
+      amenities: [],
+      starRating: 0,
+      guestCapacity: 0,
+    });
     setSelectedSort("");
     setSearchParams({});
   };
+
+  // Loading effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000); // Simulate loading time
+
+    return () => clearTimeout(timer);
+  }, [rooms]);
+
+  // Show skeleton loading while data is loading
+  if (isLoading) {
+    return <SearchResultsSkeleton count={4} />;
+  }
 
   return (
     <div className="flex flex-col-reverse lg:flex-row items-start justify-between pt-28 md:pt-35 px-4 md:px-16 lg:px-24 xl:px-32">
@@ -138,12 +190,23 @@ const AllRooms = () => {
           </p>
         </div>
 
-        {filteredRooms.map((room) => (
+        {filteredRooms.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-gray-500 text-lg">No rooms found matching your criteria.</p>
+            <button 
+              onClick={clearFilters}
+              className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              Clear Filters
+            </button>
+          </div>
+        ) : (
+          filteredRooms.map((room) => (
           <div
             key={room._id}
             className="flex flex-col md:flex-row items-start py-10 gap-6 border-b border-gray-300 last:pb-30 last:border-0"
           >
-            <img
+            <LazyImage
               onClick={() => {
                 navigate(`/rooms/${room._id}`);
                 scrollTo(0, 0);
@@ -195,7 +258,7 @@ const AllRooms = () => {
               </p>
             </div>
           </div>
-        ))}
+        )))}
       </div>
       {/* Filters */}
       <div className="bg-white w-80 border border-gray-300 text-gray-600 max-lg:mb-8 min-lg:mt-16">
@@ -224,7 +287,7 @@ const AllRooms = () => {
           } overflow-hidden transition-all duration-700`}
         >
           <div className="px-5 pt-5">
-            <p className="font-medium text-gray-800 pb-2">Popular filters</p>
+            <p className="font-medium text-gray-800 pb-2">Room Types</p>
             {roomTypes.map((room, index) => (
               <CheckBox
                 key={index}
@@ -236,18 +299,37 @@ const AllRooms = () => {
               />
             ))}
           </div>
+          
           <div className="px-5 pt-5">
-            <p className="font-medium text-gray-800 pb-2">Price Range</p>
-            {priceRanges.map((range, index) => (
-              <CheckBox
-                key={index}
-                label={`${currency} ${range}`}
-                selected={selectedFilters.priceRanges.includes(range)}
-                onChange={(checked) =>
-                  handleFilterChange(checked, range, "priceRanges")
-                }
-              />
-            ))}
+            <PriceRangeSlider
+              min={0}
+              max={3000}
+              step={50}
+              value={selectedFilters.priceRange}
+              onChange={(value) => setSelectedFilters(prev => ({ ...prev, priceRange: value }))}
+              currency={currency}
+            />
+          </div>
+          
+          <div className="px-5 pt-5">
+            <AmenityFilter
+              selectedAmenities={selectedFilters.amenities}
+              onChange={(amenities) => setSelectedFilters(prev => ({ ...prev, amenities }))}
+            />
+          </div>
+          
+          <div className="px-5 pt-5">
+            <StarRatingFilter
+              selectedRating={selectedFilters.starRating}
+              onChange={(rating) => setSelectedFilters(prev => ({ ...prev, starRating: rating }))}
+            />
+          </div>
+          
+          <div className="px-5 pt-5">
+            <GuestCapacityFilter
+              selectedCapacity={selectedFilters.guestCapacity}
+              onChange={(capacity) => setSelectedFilters(prev => ({ ...prev, guestCapacity: capacity }))}
+            />
           </div>
           <div className="px-5 pt-5 pb-7">
             <p className="font-medium text-gray-800 pb-2">Sort By</p>
