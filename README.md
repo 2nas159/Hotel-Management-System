@@ -10,6 +10,7 @@ A modern, full-stack hotel booking and management platform built with React and 
 
 ## 📋 Table of Contents
 
+- [Live Demo](#-live-demo)
 - [Features](#-features)
 - [Technology Stack](#-technology-stack)
 - [Project Structure](#-project-structure)
@@ -19,6 +20,22 @@ A modern, full-stack hotel booking and management platform built with React and 
 - [Screenshots](#-screenshots)
 - [Contributing](#-contributing)
 - [License](#-license)
+
+## 🌐 Live Demo
+
+**Experience the Hotel Management System in action!**
+
+🔗 **[Visit Live Demo](https://hotel-management-system-plum.vercel.app)**
+
+The live demo showcases all the features including:
+- ✨ Modern, responsive UI with smooth animations
+- 🔍 Advanced search and filtering capabilities
+- 📱 Mobile-optimized experience
+- 🏨 Complete hotel booking workflow
+- 📊 Analytics dashboard for hotel owners
+- ⭐ Review and rating system
+
+*Note: The demo uses sample data for demonstration purposes.*
 
 ## ✨ Features
 
