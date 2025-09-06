@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { assets, facilityIcons, roomsDummyData } from "../assets/assets";
+import { assets, facilityIcons } from "../assets/assets";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import StarRating from "../components/StarRating";
+import LuxuryStarRating from "../components/LuxuryStarRating";
 import { useAppContext } from "../context/AppContext";
 import SearchResultsSkeleton from "../components/SearchResultsSkeleton";
 import PriceRangeSlider from "../components/PriceRangeSlider";
@@ -9,31 +9,6 @@ import AmenityFilter from "../components/AmenityFilter";
 import StarRatingFilter from "../components/StarRatingFilter";
 import GuestCapacityFilter from "../components/GuestCapacityFilter";
 import LazyImage from "../components/LazyImage";
-
-const CheckBox = ({ label, selected = false, onChange = () => {} }) => (
-  <label className="flex items-center gap-3 cursor-pointer mt-2 text-sm">
-    <input
-      type="checkbox"
-      checked={selected}
-      onChange={(e) => onChange(e.target.checked, label)}
-      className="w-4 h-4 accent-primary"
-    />
-    <span className="font-light select-none">{label}</span>
-  </label>
-);
-
-const RadioButton = ({ label, selected = false, onChange = () => {} }) => (
-  <label className="flex items-center gap-3 cursor-pointer mt-2 text-sm">
-    <input
-      type="radio"
-      name="sortOption"
-      checked={selected}
-      onChange={(e) => onChange(label)}
-      className="w-4 h-4 accent-primary"
-    />
-    <span className="font-light select-none">{label}</span>
-  </label>
-);
 
 const AllRooms = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -51,12 +26,6 @@ const AllRooms = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const roomTypes = ["Single Bed", "Double Bed", "Luxury Room", "Family Suite"];
-  const priceRanges = [
-    "0 to 500",
-    "500 to 1000",
-    "1000 to 2000",
-    "2000 to 3000",
-  ];
 
   const sortOptions = [
     "Price: Low to High",
@@ -75,7 +44,6 @@ const AllRooms = () => {
           (item) => item !== value
         );
       }
-
       return updatedFilters;
     });
   };
@@ -84,7 +52,7 @@ const AllRooms = () => {
     setSelectedSort(sortOption);
   };
 
-  // Function to check if a room matches the selected filters
+  // Filter functions
   const matchesRoomTypes = (room) => {
     return (
       selectedFilters.roomTypes.length === 0 ||
@@ -92,37 +60,28 @@ const AllRooms = () => {
     );
   };
 
-  // Function to filter rooms based on price range
   const matchesPriceRange = (room) => {
     const [minPrice, maxPrice] = selectedFilters.priceRange;
     return room.pricePerNight >= minPrice && room.pricePerNight <= maxPrice;
   };
 
-  // Function to filter rooms based on amenities
   const matchesAmenities = (room) => {
     return (
       selectedFilters.amenities.length === 0 ||
-      selectedFilters.amenities.every(amenity => 
+      selectedFilters.amenities.every((amenity) =>
         room.amenities.includes(amenity)
       )
     );
   };
 
-  // Function to filter rooms based on star rating (placeholder - would need actual rating data)
   const matchesStarRating = (room) => {
-    // For now, return true as we don't have actual star ratings in the data
-    // This would be implemented when we add the review system
-    return true;
+    return true; // Placeholder for future implementation
   };
 
-  // Function to filter rooms based on guest capacity (placeholder - would need actual capacity data)
   const matchesGuestCapacity = (room) => {
-    // For now, return true as we don't have guest capacity in the current room model
-    // This would be implemented when we add capacity to the room model
-    return true;
+    return true; // Placeholder for future implementation
   };
 
-  // Function to sort rooms based on the selected sort option
   const sortRooms = (a, b) => {
     if (selectedSort === "Price: Low to High") {
       return a.pricePerNight - b.pricePerNight;
@@ -131,13 +90,12 @@ const AllRooms = () => {
     } else if (selectedSort === "Newest First") {
       return new Date(b.createdAt) - new Date(a.createdAt);
     }
-    return 0; // Default case
+    return 0;
   };
 
-  // Filter Destination
   const filterDestination = (room) => {
     const destination = searchParams.get("destination");
-    if (!destination) return true; // No filter applied
+    if (!destination) return true;
     return room.hotel.city.toLowerCase().includes(destination.toLowerCase());
   };
 
@@ -155,8 +113,8 @@ const AllRooms = () => {
 
   // Clear filters and sort
   const clearFilters = () => {
-    setSelectedFilters({ 
-      roomTypes: [], 
+    setSelectedFilters({
+      roomTypes: [],
       priceRange: [0, 3000],
       amenities: [],
       starRating: 0,
@@ -170,7 +128,7 @@ const AllRooms = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1000); // Simulate loading time
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [rooms]);
@@ -181,166 +139,343 @@ const AllRooms = () => {
   }
 
   return (
-    <div className="flex flex-col-reverse lg:flex-row items-start justify-between pt-28 md:pt-35 px-4 md:px-16 lg:px-24 xl:px-32">
-      <div>
-        <div className="flex flex-col items-start text-left">
-          <h1 className="font-playfair text-4xl md:text-[40px]">Hotel Rooms</h1>
-          <p className="text-sm md:text-base text-gray-500/90 mt-2 max-w-174">
-            Explore our wide range of hotel rooms
-          </p>
-        </div>
-
-        {filteredRooms.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-gray-500 text-lg">No rooms found matching your criteria.</p>
-            <button 
-              onClick={clearFilters}
-              className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              Clear Filters
-            </button>
-          </div>
-        ) : (
-          filteredRooms.map((room) => (
-          <div
-            key={room._id}
-            className="flex flex-col md:flex-row items-start py-10 gap-6 border-b border-gray-300 last:pb-30 last:border-0"
-          >
-            <LazyImage
-              onClick={() => {
-                navigate(`/rooms/${room._id}`);
-                scrollTo(0, 0);
-              }}
-              src={room.images[0]}
-              className="max-h-65 md:w-1/2 rounded-xl shadow-lg object-cover cursor-pointer"
-              alt="room-image"
-              title="View Room Details"
-            />
-            <div className="md:w-1/2 flex flex-col gap-2">
-              <p className="text-gray-500">{room.hotel.city}</p>
-              <p
-                onClick={() => {
-                  navigate(`/rooms/${room._id}`);
-                  scrollTo(0, 0);
-                }}
-                className="text-gray-800 text-3xl font-playfair cursor-pointer"
-              >
-                {room.hotel.name}
-              </p>
-              <div className="flex items-center">
-                <StarRating />
-                <p className="ml-2">200+ reviews</p>
-              </div>
-              <div className="flex items-center gap-1 text-gray-500 mt-2 text-sm">
-                <img src={assets.locationIcon} alt="" />
-                <span className="text-gray-500">{room.hotel.address}</span>
-              </div>
-              {/* Room Amenties */}
-              <div className="flex flex-wrap items-center mt-3 mb-6 gap-4">
-                {room.amenities.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#F5F5FF]/70"
-                  >
-                    <img
-                      src={facilityIcons[item]}
-                      alt={item}
-                      className="w-5 h-5"
-                    />
-                    <p className="text-xs">{item}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Room Price per Night */}
-              <p className="text-xl font-medium text-gray-700">
-                ${room.pricePerNight} /night
+    <div className="min-h-screen bg-gray-50 mt-16">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-light text-gray-900 tracking-tight mb-2">
+                Hotel Rooms
+              </h1>
+              <p className="text-lg text-gray-500 font-light">
+                {filteredRooms.length} room
+                {filteredRooms.length !== 1 ? "s" : ""} available
               </p>
             </div>
-          </div>
-        )))}
-      </div>
-      {/* Filters */}
-      <div className="bg-white w-80 border border-gray-300 text-gray-600 max-lg:mb-8 min-lg:mt-16">
-        <div
-          className={`flex items-center justify-between px-5 py-2.5 min-lg:border-b border-gray-300 ${
-            openFilters && "border-b"
-          }`}
-        >
-          {/* HEADER */}
-          <p className="text-xs cursor-pointer">FILTERS</p>
-          <div className="text-xs cursor-pointer">
-            <span
+            <button
               onClick={() => setOpenFilters(!openFilters)}
-              className="lg:hidden"
+              className="lg:hidden flex items-center gap-3 px-6 py-3 border border-gray-200 rounded-2xl hover:bg-gray-50 transition-all duration-300"
             >
-              {openFilters ? "HIDE" : "SHOW"}
-            </span>
-            <span className="hidden lg:block">CLEAR</span>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                />
+              </svg>
+              <span className="font-medium text-gray-700">Filters</span>
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* BODY */}
-        <div
-          className={`${
-            openFilters ? "h-auto" : "h-0 lg:h-auto"
-          } overflow-hidden transition-all duration-700`}
-        >
-          <div className="px-5 pt-5">
-            <p className="font-medium text-gray-800 pb-2">Room Types</p>
-            {roomTypes.map((room, index) => (
-              <CheckBox
-                key={index}
-                label={room}
-                selected={selectedFilters.roomTypes.includes(room)}
-                onChange={(checked) =>
-                  handleFilterChange(checked, room, "roomTypes")
-                }
-              />
-            ))}
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12">
+        <div className="flex gap-6">
+          {/* Filters Sidebar */}
+          <div
+            className={`w-80 flex-shrink-0 ${
+              openFilters ? "block" : "hidden lg:block"
+            }`}
+          >
+            <div className="bg-white rounded-lg border border-gray-200 sticky top-6">
+              {/* Filter Header */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                <h3 className="font-semibold text-gray-900">Filters</h3>
+                <button
+                  onClick={clearFilters}
+                  className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  Clear all
+                </button>
+              </div>
+
+              {/* Filter Content */}
+              <div className="p-4 space-y-6">
+                {/* Room Types */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-3">Room Type</h4>
+                  <div className="space-y-2">
+                    {roomTypes.map((roomType, index) => (
+                      <label
+                        key={index}
+                        className="flex items-center gap-3 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedFilters.roomTypes.includes(roomType)}
+                          onChange={(e) =>
+                            handleFilterChange(
+                              e.target.checked,
+                              roomType,
+                              "roomTypes"
+                            )
+                          }
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                        <span className="text-sm text-gray-700">
+                          {roomType}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Price Range */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-3">
+                    Price Range
+                  </h4>
+                  <PriceRangeSlider
+                    min={0}
+                    max={3000}
+                    step={50}
+                    value={selectedFilters.priceRange}
+                    onChange={(value) =>
+                      setSelectedFilters((prev) => ({
+                        ...prev,
+                        priceRange: value,
+                      }))
+                    }
+                    currency={currency}
+                  />
+                </div>
+
+                {/* Amenities */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-3">Amenities</h4>
+                  <AmenityFilter
+                    selectedAmenities={selectedFilters.amenities}
+                    onChange={(amenities) =>
+                      setSelectedFilters((prev) => ({ ...prev, amenities }))
+                    }
+                  />
+                </div>
+
+                {/* Star Rating */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-3">Rating</h4>
+                  <StarRatingFilter
+                    selectedRating={selectedFilters.starRating}
+                    onChange={(rating) =>
+                      setSelectedFilters((prev) => ({
+                        ...prev,
+                        starRating: rating,
+                      }))
+                    }
+                  />
+                </div>
+
+                {/* Guest Capacity */}
+                <div>
+                  <GuestCapacityFilter
+                    selectedCapacity={selectedFilters.guestCapacity}
+                    onChange={(capacity) =>
+                      setSelectedFilters((prev) => ({
+                        ...prev,
+                        guestCapacity: capacity,
+                      }))
+                    }
+                  />
+                </div>
+
+                {/* Sort Options */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-3">Sort By</h4>
+                  <div className="space-y-2">
+                    {sortOptions.map((option, index) => (
+                      <label
+                        key={index}
+                        className="flex items-center gap-3 cursor-pointer"
+                      >
+                        <input
+                          type="radio"
+                          name="sortOption"
+                          checked={selectedSort === option}
+                          onChange={() => setSelectedSort(option)}
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2"
+                        />
+                        <span className="text-sm text-gray-700">{option}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <div className="px-5 pt-5">
-            <PriceRangeSlider
-              min={0}
-              max={3000}
-              step={50}
-              value={selectedFilters.priceRange}
-              onChange={(value) => setSelectedFilters(prev => ({ ...prev, priceRange: value }))}
-              currency={currency}
-            />
-          </div>
-          
-          <div className="px-5 pt-5">
-            <AmenityFilter
-              selectedAmenities={selectedFilters.amenities}
-              onChange={(amenities) => setSelectedFilters(prev => ({ ...prev, amenities }))}
-            />
-          </div>
-          
-          <div className="px-5 pt-5">
-            <StarRatingFilter
-              selectedRating={selectedFilters.starRating}
-              onChange={(rating) => setSelectedFilters(prev => ({ ...prev, starRating: rating }))}
-            />
-          </div>
-          
-          <div className="px-5 pt-5">
-            <GuestCapacityFilter
-              selectedCapacity={selectedFilters.guestCapacity}
-              onChange={(capacity) => setSelectedFilters(prev => ({ ...prev, guestCapacity: capacity }))}
-            />
-          </div>
-          <div className="px-5 pt-5 pb-7">
-            <p className="font-medium text-gray-800 pb-2">Sort By</p>
-            {sortOptions.map((option, index) => (
-              <RadioButton
-                key={index}
-                label={option}
-                selected={selectedSort === option}
-                onChange={() => setSelectedSort(option)}
-              />
-            ))}
+
+          {/* Rooms Grid */}
+          <div className="flex-1">
+            {filteredRooms.length === 0 ? (
+              <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg
+                    className="w-8 h-8 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No rooms found
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Try adjusting your filters to see more results.
+                </p>
+                <button
+                  onClick={clearFilters}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                {filteredRooms.map((room) => (
+                  <article
+                    key={room._id}
+                    className="group bg-white rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-500 ease-out border-0 hover:border border-gray-100/50"
+                  >
+                    {/* Image Container */}
+                    <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+                      <img
+                        onClick={() => {
+                          navigate(`/rooms/${room._id}`);
+                          scrollTo(0, 0);
+                        }}
+                        src={room.images[0]}
+                        className="absolute inset-0 w-full h-full object-cover object-center cursor-pointer group-hover:scale-110 transition-transform duration-700 ease-out"
+                        alt={`${room.hotel.name} - ${room.roomType}`}
+                        title="View Room Details"
+                        loading="lazy"
+                      />
+
+                      {/* Rating Badge */}
+                      <div className="absolute top-5 left-5">
+                        <div className="bg-white/90 backdrop-blur-md rounded-2xl px-3 py-2 shadow-lg">
+                          <LuxuryStarRating
+                            rating={4.8}
+                            size="sm"
+                            showNumber={true}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Price Overlay */}
+                      <div className="absolute bottom-5 right-5">
+                        <div className="bg-black/70 backdrop-blur-md rounded-2xl px-4 py-2.5 text-white">
+                          <div className="text-right">
+                            <p className="text-xs font-medium text-white/80 leading-none">
+                              from
+                            </p>
+                            <p className="text-lg font-bold leading-none">
+                              {currency}
+                              {room.pricePerNight}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-8">
+                      {/* Location */}
+                      <div className="flex items-center gap-2 mb-4">
+                        <svg
+                          className="w-4 h-4 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                        </svg>
+                        <span className="text-sm font-medium text-gray-500 tracking-wide uppercase">
+                          {room.hotel.city}
+                        </span>
+                      </div>
+
+                      {/* Hotel Name */}
+                      <h3
+                        onClick={() => {
+                          navigate(`/rooms/${room._id}`);
+                          scrollTo(0, 0);
+                        }}
+                        className="text-2xl font-light text-gray-900 cursor-pointer hover:text-gray-700 transition-colors mb-3 leading-tight"
+                        style={{
+                          lineHeight: "1.2",
+                          wordBreak: "break-word",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {room.hotel.name}
+                      </h3>
+
+                      {/* Room Type */}
+                      <p className="text-base text-gray-600 mb-6 font-normal leading-relaxed">
+                        {room.roomType}
+                      </p>
+
+                      {/* Amenities */}
+                      <div className="flex flex-wrap gap-2 mb-8">
+                        {room.amenities.slice(0, 3).map((amenity, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-2 px-3 py-2 bg-gray-50/80 rounded-xl text-xs text-gray-600 font-medium"
+                          >
+                            <img
+                              src={facilityIcons[amenity]}
+                              alt={amenity}
+                              className="w-3.5 h-3.5 opacity-70"
+                            />
+                            <span className="whitespace-nowrap">{amenity}</span>
+                          </div>
+                        ))}
+                        {room.amenities.length > 3 && (
+                          <div className="px-3 py-2 bg-gray-50/80 rounded-xl text-xs text-gray-600 font-medium">
+                            +{room.amenities.length - 3}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Button */}
+                      <button
+                        onClick={() => {
+                          navigate(`/rooms/${room._id}`);
+                          scrollTo(0, 0);
+                        }}
+                        className="w-full py-4 bg-gray-900 text-white rounded-2xl hover:bg-gray-800 transition-all duration-300 text-sm font-medium tracking-wide uppercase letter-spacing-wider"
+                      >
+                        View Details
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

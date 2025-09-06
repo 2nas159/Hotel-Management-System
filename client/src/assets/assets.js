@@ -37,7 +37,8 @@ import listIcon from "./listIcon.svg";
 import uploadArea from "./uploadArea.svg";
 import totalBookingIcon from "./totalBookingIcon.svg";
 import totalRevenueIcon from "./totalRevenueIcon.svg";
-import messagesIcon from "./messagesIcon.svg"
+import messagesIcon from "./messagesIcon.svg";
+import airConditioningIcon from "./airConditioningIcon.svg";
 
 
 export const assets = {
@@ -74,6 +75,7 @@ export const assets = {
     totalBookingIcon,
     totalRevenueIcon,
     messagesIcon,
+    airConditioningIcon,
 }
 
 export const cities = [
@@ -106,6 +108,7 @@ export const facilityIcons = {
     "Room Service": assets.roomServiceIcon,
     "Mountain View": assets.mountainIcon,
     "Pool Access": assets.poolIcon,
+    "Air Conditioning": assets.airConditioningIcon,
 };
 
 // For Room Details Page

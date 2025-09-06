@@ -9,11 +9,8 @@ export const getRevenueAnalytics = async (req, res) => {
     const userId = req.user.id;
     const { period = "monthly" } = req.query;
 
-    console.log("Analytics request from user:", userId);
-
     // Find hotel owned by user
     const hotel = await Hotel.findOne({ owner: userId });
-    console.log("Found hotel:", hotel);
     
     if (!hotel) {
       return res.json({
@@ -39,13 +36,9 @@ export const getRevenueAnalytics = async (req, res) => {
 
     // First, let's check if there are any bookings at all
     const totalBookings = await Booking.countDocuments({ hotel: hotel._id });
-    console.log("Total bookings for hotel:", totalBookings);
-    
-    // Let's also check a sample booking to see the data structure
-    const sampleBooking = await Booking.findOne({ hotel: hotel._id });
-    console.log("Sample booking:", sampleBooking);
 
-    const revenueData = await Booking.aggregate([
+    // Try different aggregation approaches
+    let revenueData = await Booking.aggregate([
       {
         $match: {
           hotel: hotel._id,
@@ -67,7 +60,39 @@ export const getRevenueAnalytics = async (req, res) => {
       }
     ]);
 
-    console.log("Revenue aggregation result:", revenueData);
+    // If aggregation returns empty, try a simpler approach
+    if (revenueData.length === 0) {
+      
+      // Get all bookings and group them manually
+      const allBookings = await Booking.find({
+        hotel: hotel._id,
+        status: { $ne: "cancelled" }
+      }).sort({ createdAt: -1 });
+
+
+      if (allBookings.length > 0) {
+        // Group bookings by month manually
+        const monthlyData = {};
+        
+        allBookings.forEach(booking => {
+          const date = new Date(booking.createdAt);
+          const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          
+          if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = {
+              month: monthKey,
+              revenue: 0,
+              bookings: 0
+            };
+          }
+          
+          monthlyData[monthKey].revenue += booking.totalPrice;
+          monthlyData[monthKey].bookings += 1;
+        });
+
+        revenueData = Object.values(monthlyData).sort((a, b) => a.month.localeCompare(b.month));
+      }
+    }
 
     // Format data for charts
     const formattedData = revenueData.map(item => ({
@@ -76,11 +101,8 @@ export const getRevenueAnalytics = async (req, res) => {
       bookings: item.bookings
     }));
 
-    console.log("Formatted data:", formattedData);
-
     // If no data, provide sample data for demonstration
     if (formattedData.length === 0) {
-      console.log("No data found, providing sample data");
       
       // Try to get some basic booking data to show at least something
       const basicBookings = await Booking.find({ 
@@ -89,7 +111,6 @@ export const getRevenueAnalytics = async (req, res) => {
       }).sort({ createdAt: -1 }).limit(6);
       
       if (basicBookings.length > 0) {
-        console.log("Found basic bookings, creating simple chart data");
         const basicData = basicBookings.map((booking, index) => ({
           month: `Month ${index + 1}`,
           revenue: booking.totalPrice,
@@ -148,7 +169,7 @@ export const getBookingTrends = async (req, res) => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    const bookingTrends = await Booking.aggregate([
+    let bookingTrends = await Booking.aggregate([
       {
         $match: {
           hotel: hotel._id,
@@ -172,10 +193,45 @@ export const getBookingTrends = async (req, res) => {
       }
     ]);
 
+    // If aggregation returns empty, try manual approach
+    if (bookingTrends.length === 0) {
+      
+      const allBookings = await Booking.find({
+        hotel: hotel._id,
+        createdAt: { $gte: sevenDaysAgo }
+      });
+
+
+      if (allBookings.length > 0) {
+        // Group by day of week manually
+        const dayData = {};
+        const dayNames = ["", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        
+        // Initialize all days
+        for (let i = 1; i <= 7; i++) {
+          dayData[i] = {
+            day: dayNames[i],
+            bookings: 0,
+            cancellations: 0
+          };
+        }
+        
+        allBookings.forEach(booking => {
+          const dayOfWeek = new Date(booking.createdAt).getDay() + 1; // MongoDB uses 1-7, JS uses 0-6
+          dayData[dayOfWeek].bookings += 1;
+          if (booking.status === "cancelled") {
+            dayData[dayOfWeek].cancellations += 1;
+          }
+        });
+
+        bookingTrends = Object.values(dayData);
+      }
+    }
+
     // Map day numbers to day names
     const dayNames = ["", "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     const formattedData = bookingTrends.map(item => ({
-      day: dayNames[item._id],
+      day: item.day || dayNames[item._id],
       bookings: item.bookings,
       cancellations: item.cancellations
     }));
@@ -302,7 +358,7 @@ export const getRoomTypeAnalytics = async (req, res) => {
       });
     }
 
-    const roomTypeData = await Room.aggregate([
+    let roomTypeData = await Room.aggregate([
       {
         $match: { hotel: hotel._id }
       },
@@ -364,6 +420,43 @@ export const getRoomTypeAnalytics = async (req, res) => {
         }
       }
     ]);
+
+    // If aggregation returns empty, try manual approach
+    if (roomTypeData.length === 0) {
+      
+      const rooms = await Room.find({ hotel: hotel._id });
+
+      if (rooms.length > 0) {
+        const roomTypeMap = {};
+        
+        for (const room of rooms) {
+          const bookings = await Booking.find({
+            room: room._id,
+            status: { $ne: "cancelled" }
+          });
+          
+          const revenue = bookings.reduce((sum, booking) => sum + booking.totalPrice, 0);
+          
+          if (!roomTypeMap[room.roomType]) {
+            roomTypeMap[room.roomType] = {
+              type: room.roomType,
+              bookings: 0,
+              revenue: 0,
+              totalRooms: 0
+            };
+          }
+          
+          roomTypeMap[room.roomType].bookings += bookings.length;
+          roomTypeMap[room.roomType].revenue += revenue;
+          roomTypeMap[room.roomType].totalRooms += 1;
+        }
+        
+        roomTypeData = Object.values(roomTypeMap).map(item => ({
+          ...item,
+          occupancy: item.totalRooms > 0 ? Math.round((item.bookings / item.totalRooms) * 100) : 0
+        }));
+      }
+    }
 
     // If no data, provide sample data
     if (roomTypeData.length === 0) {

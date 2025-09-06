@@ -14,6 +14,9 @@ const Dashboard = () => {
     bookings: [],
     totalBookings: 0,
     totalRevenue: 0,
+    confirmedBookings: 0,
+    pendingBookings: 0,
+    cancelledBookings: 0,
   });
   const [analyticsData, setAnalyticsData] = useState({
     revenueData: [],
@@ -23,19 +26,25 @@ const Dashboard = () => {
     isSampleData: false,
   });
   const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState(null);
 
   const fetchDashboardData = async () => {
     try {
+      setIsLoadingDashboard(true);
       const { data } = await axios.get("/api/bookings/hotel", {
         headers: { Authorization: `Bearer ${await getToken()}` },
       });
       if (data.success) {
         setDashboardData(data.dashboardData);
+        setLastUpdated(new Date());
       } else {
         toast.error(data.message);
       }
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setIsLoadingDashboard(false);
     }
   };
 
@@ -96,168 +105,469 @@ const Dashboard = () => {
     } catch (error) {
       console.error("Error loading analytics data:", error);
       toast.error("Error loading analytics data");
-      // Set empty data on error
-      setAnalyticsData({
-        revenueData: [],
-        bookingTrends: [],
-        occupancyData: {},
-        roomTypeData: [],
-      });
     } finally {
       setIsLoadingAnalytics(false);
     }
   };
 
+  const refreshData = async () => {
+    await Promise.all([fetchDashboardData(), fetchAnalyticsData()]);
+  };
+
   useEffect(() => {
     if (user) {
-      fetchDashboardData();
-      fetchAnalyticsData();
+      refreshData();
     }
   }, [user]);
 
+  // Calculate additional metrics
+  const averageBookingValue =
+    dashboardData.totalBookings > 0
+      ? Math.round(dashboardData.totalRevenue / dashboardData.totalBookings)
+      : 0;
+
+  const confirmationRate =
+    dashboardData.totalBookings > 0
+      ? Math.round(
+          (dashboardData.confirmedBookings / dashboardData.totalBookings) * 100
+        )
+      : 0;
+
+  const cancellationRate =
+    dashboardData.totalBookings > 0
+      ? Math.round(
+          (dashboardData.cancelledBookings / dashboardData.totalBookings) * 100
+        )
+      : 0;
+
+  // Recent bookings (last 5)
+  const recentBookings = dashboardData.bookings.slice(0, 5);
+
   return (
-    <div>
-      <Title title="Dashboard" subTitle="Overview of all hotels" />
-
-      <div className="flex gap-4 my-8">
-        {/* Total Bookings */}
-        <div className="bg-blue-500/3 border border-blue-400/10 rounded flex p-4 pr-8">
-          <img
-            src={assets.totalBookingIcon}
-            alt="total-bookings-icon"
-            className="max-sm:hidden h-10"
-          />
-          <div className="flex flex-col sm:ml-4 font-medium">
-            <p className="text-blue-500 text-lg">Total Bookings</p>
-            <p className="text-base text-neutral-400">
-              {dashboardData.totalBookings}
-            </p>
-          </div>
-        </div>
-
-        {/* Total Revenue */}
-        <div className="bg-green-500/3 border border-green-400/10 rounded flex p-4 pr-8">
-          <img
-            src={assets.totalRevenueIcon}
-            alt="total-revenue-icon"
-            className="max-sm:hidden h-10"
-          />
-          <div className="flex flex-col sm:ml-4 font-medium">
-            <p className="text-blue-500 text-lg">Total Revenue</p>
-            <p className="text-base text-neutral-400">
-              {currency} {dashboardData.totalRevenue}
-            </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header Section */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="px-4 sm:px-6 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                Hotel Dashboard
+              </h1>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">
+                Welcome back! Here's your hotel performance overview.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+              {lastUpdated && (
+                <div className="text-xs sm:text-sm text-gray-500">
+                  Last updated: {lastUpdated.toLocaleTimeString()}
+                </div>
+              )}
+              <button
+                onClick={refreshData}
+                disabled={isLoadingDashboard || isLoadingAnalytics}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+              >
+                {(isLoadingDashboard || isLoadingAnalytics) && (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                )}
+                <span className="hidden sm:inline">Refresh Data</span>
+                <span className="sm:hidden">Refresh</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Recent Bookings 
-      <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Recent Bookings</h2>
-          <div className="w-full max-w-3xl text-left border border-gray-300 rounded-lg max-h-80 overflow-y-scroll">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr className="border-b">
-                  <th className="py-3 px-4 text-gray-800 font-medium">
-                    User Name
-                  </th>
-                  <th className="py-3 px-4 text-gray-800 font-medium">
-                    Room Name
-                  </th>
-                  <th className="py-3 px-4 text-gray-800 font-medium text-center">
-                    Total Amount
-                  </th>
-                  <th className="py-3 px-4 text-gray-800 font-medium">
-                    Payment Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="text-sm">
-                {dashboardData.bookings.map((item, index) => (
-                  <tr key={index} className="border-b hover:bg-gray-50">
-                    <td className="py-3 px-4 text-gray-700 border-t border-gray-300">
-                      {item.user.username}
-                    </td>
-                    <td className="py-3 px-4 text-gray-700 border-t border-gray-300">
-                      {item.room.roomType}
-                    </td>
-                    <td className="py-3 px-4 text-gray-700 border-t border-gray-300">
-                      {currency} {item.totalPrice}
-                    </td>
-                    <td className="py-3 px-4 text-gray-700 border-t border-gray-300">
-                      <button
-                        className={`py-1 px-3 rounded-full mx-auto ${
-                          item.isPaid
-                            ? "bg-green-200 text-green-600"
-                            : "bg-amber-200 text-yellow-600"
-                        }`}
-                      >
-                        {item.isPaid ? "Completed" : "Pending"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>*/}
-
-      {/* Analytics Section */}
-      <div className="mt-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">Analytics & Insights</h2>
-          {analyticsData.isSampleData && (
-            <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-3 py-1 rounded-full text-sm">
-              📊 Sample Data
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        {/* Key Metrics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {/* Total Revenue */}
+          <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">
+                  Total Revenue
+                </p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
+                  {currency} {dashboardData.totalRevenue.toLocaleString()}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">All time earnings</p>
+              </div>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <img
+                  src={assets.totalRevenueIcon}
+                  alt="Revenue"
+                  className="w-5 h-5 sm:w-6 sm:h-6"
+                />
+              </div>
             </div>
+          </div>
+
+          {/* Total Bookings */}
+          <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">
+                  Total Bookings
+                </p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                  {dashboardData.totalBookings}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                  {dashboardData.confirmedBookings} confirmed
+                </p>
+              </div>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <img
+                  src={assets.totalBookingIcon}
+                  alt="Bookings"
+                  className="w-5 h-5 sm:w-6 sm:h-6"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Average Booking Value */}
+          <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">
+                  Avg Booking Value
+                </p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
+                  {currency} {averageBookingValue}
+                </p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">Per booking</p>
+              </div>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg
+                  className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Confirmation Rate */}
+          <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">
+                  Confirmation Rate
+                </p>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">
+                  {confirmationRate}%
+                </p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                  {cancellationRate}% cancelled
+                </p>
+              </div>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg
+                  className="w-5 h-5 sm:w-6 sm:h-6 text-orange-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Status Overview */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Booking Status
+              </h3>
+              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg
+                  className="w-4 h-4 text-blue-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-sm text-gray-600">Confirmed</span>
+                </div>
+                <span className="font-semibold text-gray-900">
+                  {dashboardData.confirmedBookings}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                  <span className="text-sm text-gray-600">Pending</span>
+                </div>
+                <span className="font-semibold text-gray-900">
+                  {dashboardData.pendingBookings}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="text-sm text-gray-600">Cancelled</span>
+                </div>
+                <span className="font-semibold text-gray-900">
+                  {dashboardData.cancelledBookings}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Bookings */}
+          <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6 lg:col-span-2">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Recent Bookings
+              </h3>
+              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <svg
+                  className="w-4 h-4 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {recentBookings.length > 0 ? (
+                recentBookings.map((booking) => (
+                  <div
+                    key={booking._id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div
+                        className={`w-3 h-3 rounded-full flex-shrink-0 ${
+                          booking.status === "confirmed"
+                            ? "bg-green-500"
+                            : booking.status === "pending"
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                        }`}
+                      ></div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {booking.room?.roomType || "Room"}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(booking.checkInDate).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0 ml-2">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {currency} {booking.totalPrice}
+                      </p>
+                      <p className="text-xs text-gray-500 capitalize">
+                        {booking.status}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No recent bookings</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Analytics Section */}
+        <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-3">
+            <div>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+                Analytics & Insights
+              </h2>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">
+                Real-time performance metrics and trends
+              </p>
+            </div>
+            {analyticsData.isSampleData && (
+              <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-3 py-1 rounded-full text-xs sm:text-sm self-start sm:self-auto">
+                📊 Sample Data
+              </div>
+            )}
+          </div>
+
+          {isLoadingAnalytics ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-48 sm:h-64 bg-gray-200 rounded-lg"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {analyticsData.isSampleData && (
+                <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="text-blue-500 text-lg sm:text-xl flex-shrink-0">ℹ️</div>
+                    <div>
+                      <h4 className="font-medium text-blue-900 mb-1 text-sm sm:text-base">
+                        Sample Analytics Data
+                      </h4>
+                      <p className="text-xs sm:text-sm text-blue-700">
+                        You're seeing sample data because there are no bookings
+                        yet. Once you have real bookings, the charts will
+                        display your actual hotel performance data.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+                    Revenue Trends
+                  </h3>
+                  <RevenueChart data={analyticsData.revenueData} />
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+                    Booking Trends
+                  </h3>
+                  <BookingTrends data={analyticsData.bookingTrends} />
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+                    Occupancy Rate
+                  </h3>
+                  <OccupancyRate data={analyticsData.occupancyData} />
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+                    Room Type Performance
+                  </h3>
+                  <RoomTypeAnalytics data={analyticsData.roomTypeData} />
+                </div>
+              </div>
+            </>
           )}
         </div>
 
-        {isLoadingAnalytics ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {Array(4)
-              .fill("")
-              .map((_, index) => (
-                <div
-                  key={index}
-                  className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 animate-pulse"
+        {/* Quick Actions */}
+        <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+            Quick Actions
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <button className="flex items-center gap-3 p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-                  <div className="space-y-3">
-                    <div className="h-4 bg-gray-200 rounded"></div>
-                    <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                    <div className="h-4 bg-gray-200 rounded w-4/6"></div>
-                  </div>
-                </div>
-              ))}
-          </div>
-        ) : (
-          <>
-            {analyticsData.isSampleData && (
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <div className="text-blue-500 text-xl">ℹ️</div>
-                  <div>
-                    <h4 className="font-medium text-blue-900 mb-1">
-                      Sample Analytics Data
-                    </h4>
-                    <p className="text-sm text-blue-700">
-                      You're seeing sample data because there are no bookings
-                      yet. Once you have real bookings, the charts will display
-                      your actual hotel performance data.
-                    </p>
-                  </div>
-                </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                  />
+                </svg>
               </div>
-            )}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <RevenueChart data={analyticsData.revenueData} />
-              <BookingTrends data={analyticsData.bookingTrends} />
-              <OccupancyRate data={analyticsData.occupancyData} />
-              <RoomTypeAnalytics data={analyticsData.roomTypeData} />
-            </div>
-          </>
-        )}
+              <div className="text-left min-w-0">
+                <p className="font-medium text-gray-900 text-sm sm:text-base">Add New Room</p>
+                <p className="text-xs sm:text-sm text-gray-600">
+                  Create a new room listing
+                </p>
+              </div>
+            </button>
+
+            <button className="flex items-center gap-3 p-3 sm:p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+              </div>
+              <div className="text-left min-w-0">
+                <p className="font-medium text-gray-900 text-sm sm:text-base">Manage Bookings</p>
+                <p className="text-xs sm:text-sm text-gray-600">
+                  View and manage all bookings
+                </p>
+              </div>
+            </button>
+
+            <button className="flex items-center gap-3 p-3 sm:p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors sm:col-span-2 lg:col-span-1">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg
+                  className="w-4 h-4 sm:w-5 sm:h-5 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+              </div>
+              <div className="text-left min-w-0">
+                <p className="font-medium text-gray-900 text-sm sm:text-base">View Messages</p>
+                <p className="text-xs sm:text-sm text-gray-600">Check guest messages</p>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

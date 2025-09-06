@@ -16,7 +16,7 @@ export const checkAvailability = async ({
       room,
       checkInDate: { $lte: checkOutDate },
       checkOutDate: { $gte: checkInDate },
-      status: { $ne: "cancelled" } // Exclude cancelled bookings
+      status: { $ne: "cancelled" }, // Exclude cancelled bookings
     });
     const isAvailable = bookings.length === 0;
     return isAvailable;
@@ -52,7 +52,7 @@ export const checkAvailabilityAPI = async (req, res) => {
 // POST /api/bookings/book
 export const createBooking = async (req, res) => {
   const session = await mongoose.startSession();
-  
+
   try {
     await session.withTransaction(async () => {
       const { room, checkInDate, checkOutDate, guests } = req.body;
@@ -87,18 +87,23 @@ export const createBooking = async (req, res) => {
       totalPrice *= nights;
 
       // Create booking with all required fields
-      const booking = await Booking.create([{
-        user,
-        room,
-        hotel: roomDetails.hotel._id,
-        guests: +guests,
-        checkInDate,
-        checkOutDate,
-        totalPrice,
-        status: "pending", // Set initial status
-        paymentMethod, // Use the payment method from request
-        isPaid: false, // Stripe payments are initially unpaid until webhook confirms
-      }], { session });
+      const booking = await Booking.create(
+        [
+          {
+            user,
+            room,
+            hotel: roomDetails.hotel._id,
+            guests: +guests,
+            checkInDate,
+            checkOutDate,
+            totalPrice,
+            status: "pending", // Set initial status
+            paymentMethod, // Use the payment method from request
+            isPaid: false, // Stripe payments are initially unpaid until webhook confirms
+          },
+        ],
+        { session }
+      );
 
       // Send confirmation email
       const mailOptions = {
@@ -115,7 +120,9 @@ export const createBooking = async (req, res) => {
             <li><strong>Location:</strong> ${roomDetails.hotel.address}</li>
             <li><strong>Check-in:</strong> ${booking[0].checkInDate.toDateString()}</li>
             <li><strong>Check-out:</strong> ${booking[0].checkOutDate.toDateString()}</li>
-            <li><strong>Total Amount:</strong> ${process.env.CURRENCY || "$"}${booking[0].totalPrice}</li>
+            <li><strong>Total Amount:</strong> ${process.env.CURRENCY || "$"}${
+          booking[0].totalPrice
+        }</li>
             <li><strong>Payment Method:</strong> ${paymentMethod}</li>
             <li><strong>Status:</strong> ${booking[0].status}</li>
           </ul>
@@ -182,12 +189,18 @@ export const getHotelBookings = async (req, res) => {
     // Calculate statistics
     const totalBookings = bookings.length;
     const totalRevenue = bookings
-      .filter(booking => booking.status !== "cancelled")
+      .filter((booking) => booking.status !== "cancelled")
       .reduce((acc, booking) => acc + booking.totalPrice, 0);
-    
-    const confirmedBookings = bookings.filter(booking => booking.status === "confirmed").length;
-    const pendingBookings = bookings.filter(booking => booking.status === "pending").length;
-    const cancelledBookings = bookings.filter(booking => booking.status === "cancelled").length;
+
+    const confirmedBookings = bookings.filter(
+      (booking) => booking.status === "confirmed"
+    ).length;
+    const pendingBookings = bookings.filter(
+      (booking) => booking.status === "pending"
+    ).length;
+    const cancelledBookings = bookings.filter(
+      (booking) => booking.status === "cancelled"
+    ).length;
 
     res.json({
       success: true,
@@ -214,13 +227,14 @@ export const updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-    
+
     // Validate status
     const validStatuses = ["pending", "confirmed", "cancelled"];
     if (!validStatuses.includes(status)) {
       return res.json({
         success: false,
-        message: "Invalid status. Must be one of: pending, confirmed, cancelled",
+        message:
+          "Invalid status. Must be one of: pending, confirmed, cancelled",
       });
     }
 
@@ -281,10 +295,10 @@ export const cancelBooking = async (req, res) => {
 
     const booking = await Booking.findByIdAndUpdate(
       id,
-      { 
+      {
         status: "cancelled",
         cancellationReason: reason,
-        cancelledAt: new Date()
+        cancelledAt: new Date(),
       },
       { new: true }
     ).populate("room hotel user");
@@ -305,7 +319,7 @@ export const cancelBooking = async (req, res) => {
         <h1>Booking Cancelled</h1>
         <p>Dear ${booking.user.username},</p>
         <p>Your booking has been cancelled.</p>
-        ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
+        ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ""}
         <ul>
           <li><strong>Booking ID:</strong> ${booking._id}</li>
           <li><strong>Hotel:</strong> ${booking.hotel.name}</li>
@@ -382,7 +396,7 @@ export const stripePayment = async (req, res) => {
         bookingId,
       },
     });
-    
+
     res.json({
       success: true,
       url: session.url,
@@ -400,12 +414,12 @@ export const stripePayment = async (req, res) => {
 export const fixPaidBookingStatus = async (req, res) => {
   try {
     const { bookingId } = req.params;
-    
+
     const booking = await Booking.findById(bookingId);
     if (!booking) {
       return res.json({
         success: false,
-        message: "Booking not found"
+        message: "Booking not found",
       });
     }
 
@@ -415,25 +429,23 @@ export const fixPaidBookingStatus = async (req, res) => {
         { status: "confirmed" },
         { new: true }
       );
-      
-      console.log(`✅ Fixed booking ${bookingId} status from pending to confirmed`);
-      
+
       res.json({
         success: true,
         message: "Booking status updated to confirmed",
-        booking: updatedBooking
+        booking: updatedBooking,
       });
     } else {
       res.json({
         success: false,
-        message: `Booking isPaid: ${booking.isPaid}, status: ${booking.status}. No update needed.`
+        message: `Booking isPaid: ${booking.isPaid}, status: ${booking.status}. No update needed.`,
       });
     }
   } catch (error) {
     console.error("Error fixing booking status:", error);
     res.json({
       success: false,
-      message: error.message
+      message: error.message,
     });
   }
 };
@@ -443,23 +455,19 @@ export const fixAllPaidBookings = async () => {
   try {
     const paidPendingBookings = await Booking.find({
       isPaid: true,
-      status: "pending"
+      status: "pending",
     });
 
     if (paidPendingBookings.length > 0) {
       await Booking.updateMany(
         {
           isPaid: true,
-          status: "pending"
+          status: "pending",
         },
         {
-          status: "confirmed"
+          status: "confirmed",
         }
       );
-
-      console.log(`✅ Fixed ${paidPendingBookings.length} paid bookings from pending to confirmed`);
-    } else {
-      console.log("No paid bookings in pending status found");
     }
   } catch (error) {
     console.error("Error fixing paid bookings:", error);
@@ -470,11 +478,11 @@ export const fixAllPaidBookings = async () => {
 export const cancelUnpaidBookings = async () => {
   try {
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    
+
     const unpaidBookings = await Booking.find({
       isPaid: false,
       status: "pending",
-      createdAt: { $lt: twentyFourHoursAgo }
+      createdAt: { $lt: twentyFourHoursAgo },
     });
 
     if (unpaidBookings.length > 0) {
@@ -482,16 +490,14 @@ export const cancelUnpaidBookings = async () => {
         {
           isPaid: false,
           status: "pending",
-          createdAt: { $lt: twentyFourHoursAgo }
+          createdAt: { $lt: twentyFourHoursAgo },
         },
         {
           status: "cancelled",
           cancellationReason: "Payment not completed within 24 hours",
-          cancelledAt: new Date()
+          cancelledAt: new Date(),
         }
       );
-
-      console.log(`Cancelled ${unpaidBookings.length} unpaid bookings older than 24 hours`);
     }
   } catch (error) {
     console.error("Error cancelling unpaid bookings:", error);

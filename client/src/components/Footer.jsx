@@ -12,21 +12,17 @@ const Footer = () => {
             industry. Lorem Ipsum has been the industry's standard dummy text
           </p>
           <div className="flex items-center gap-3 mt-4">
-            {/* Instagram */}
             <img
               src={assets.instagramIcon}
               alt="instgram-icon"
               className="w-6"
             />
-            {/* Facebook */}
             <img
               src={assets.facebookIcon}
               alt="facebook-icon"
               className="w-6"
             />
-            {/* Twitter */}
             <img src={assets.twitterIcon} alt="twitter-icon" className="w-6" />
-            {/* LinkedIn */}
             <img
               src={assets.linkendinIcon}
               alt="linkedin-icon"
@@ -36,7 +32,7 @@ const Footer = () => {
         </div>
 
         <div>
-          <p className="font-playfair text-lg text-gray-800">AKTAY HOLDING</p>
+          <p className="font-playfair text-lg text-gray-800">StayX</p>
           <ul className="mt-3 flex flex-col gap-2 text-sm">
             <li>
               <a href="#">About</a>
