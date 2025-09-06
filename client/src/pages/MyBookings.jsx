@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
-import Title from "../components/Title";
+import Title from "../components/ui/Title";
 import toast from "react-hot-toast";
-import ReviewForm from "../components/ReviewForm";
+import ReviewForm from "../components/forms/ReviewForm";
 
 const MyBookings = () => {
   const { user, getToken, axios } = useAppContext();

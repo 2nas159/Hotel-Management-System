@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Title from "../../components/Title";
+import Title from "../../components/ui/Title";
 import { assets } from "../../assets/assets";
 import { useAppContext } from "../../context/AppContext";
 import toast from "react-hot-toast";
@@ -135,39 +135,46 @@ const AddRoom = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header Section */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="px-4 sm:px-6 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-light text-gray-900 tracking-tight mb-2">
                 Add New Room
               </h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">
+              <p className="text-base sm:text-lg text-gray-500 font-light">
                 Create a new room listing for your hotel
               </p>
             </div>
-            <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
-              <svg
-                className="w-4 h-4 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span>All fields are required</span>
+            <div className="flex items-center gap-4 sm:gap-6">
+              <div className="text-center sm:text-right">
+                <p className="text-xs sm:text-sm text-gray-500">
+                  All fields are required
+                </p>
+              </div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
+                <svg
+                  className="w-4 h-4 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Required Fields</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <form onSubmit={onSubmitHandler} className="max-w-4xl mx-auto">
           {/* Room Images Section */}
           <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6 mb-4 sm:mb-6">

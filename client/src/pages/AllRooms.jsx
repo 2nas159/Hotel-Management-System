@@ -1,14 +1,14 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { assets, facilityIcons } from "../assets/assets";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import LuxuryStarRating from "../components/LuxuryStarRating";
+import LuxuryStarRating from "../components/ui/LuxuryStarRating";
 import { useAppContext } from "../context/AppContext";
-import SearchResultsSkeleton from "../components/SearchResultsSkeleton";
-import PriceRangeSlider from "../components/PriceRangeSlider";
-import AmenityFilter from "../components/AmenityFilter";
-import StarRatingFilter from "../components/StarRatingFilter";
-import GuestCapacityFilter from "../components/GuestCapacityFilter";
-import LazyImage from "../components/LazyImage";
+import SearchResultsSkeleton from "../components/common/SearchResultsSkeleton";
+import PriceRangeSlider from "../components/forms/PriceRangeSlider";
+import AmenityFilter from "../components/forms/AmenityFilter";
+import StarRatingFilter from "../components/forms/StarRatingFilter";
+import GuestCapacityFilter from "../components/forms/GuestCapacityFilter";
+import LazyImage from "../components/common/LazyImage";
 
 const AllRooms = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -135,7 +135,7 @@ const AllRooms = () => {
 
   // Show skeleton loading while data is loading
   if (isLoading) {
-    return <SearchResultsSkeleton count={4} />;
+    return <SearchResultsSkeleton count={6} />;
   }
 
   return (

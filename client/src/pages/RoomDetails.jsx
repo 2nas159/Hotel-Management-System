@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { assets, facilityIcons, roomCommonData } from "../assets/assets";
-import StarRating from "../components/StarRating";
+import StarRating from "../components/ui/StarRating";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
-import BookingProgressSteps from "../components/BookingProgressSteps";
+import BookingProgressSteps from "../components/forms/BookingProgressSteps";
 import { validateBookingForm, sanitizeInput } from "../utils/formValidator";
-import LazyImage from "../components/LazyImage";
+import LazyImage from "../components/common/LazyImage";
 
 const RoomDetails = () => {
   const { id } = useParams();

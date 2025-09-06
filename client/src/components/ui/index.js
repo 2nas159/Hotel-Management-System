@@ -1,0 +1,10 @@
+export { default as Hero } from './Hero';
+export { default as Title } from './Title';
+export { default as StarRating } from './StarRating';
+export { default as InteractiveStarRating } from './InteractiveStarRating';
+export { default as LuxuryStarRating } from './LuxuryStarRating';
+export { default as ExclusiveOffers } from './ExclusiveOffers';
+export { default as FeaturedDestination } from './FeaturedDestination';
+export { default as NewsLetter } from './NewsLetter';
+export { default as RecommendedHotels } from './RecommendedHotels';
+export { default as Testimonial } from './Testimonial';

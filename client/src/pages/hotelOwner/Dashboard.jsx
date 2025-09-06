@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import Title from "../../components/Title";
+import Title from "../../components/ui/Title";
 import { useAppContext } from "../../context/AppContext";
 import { assets } from "../../assets/assets";
 import RevenueChart from "../../components/analytics/RevenueChart";
@@ -145,28 +145,30 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header Section */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="px-4 sm:px-6 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-light text-gray-900 tracking-tight mb-2">
                 Hotel Dashboard
               </h1>
-              <p className="text-sm sm:text-base text-gray-600 mt-1">
+              <p className="text-base sm:text-lg text-gray-500 font-light">
                 Welcome back! Here's your hotel performance overview.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-4 sm:gap-6">
               {lastUpdated && (
-                <div className="text-xs sm:text-sm text-gray-500">
-                  Last updated: {lastUpdated.toLocaleTimeString()}
+                <div className="text-center sm:text-right">
+                  <p className="text-xs sm:text-sm text-gray-500">
+                    Last updated: {lastUpdated.toLocaleTimeString()}
+                  </p>
                 </div>
               )}
               <button
                 onClick={refreshData}
                 disabled={isLoadingDashboard || isLoadingAnalytics}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base font-medium"
               >
                 {(isLoadingDashboard || isLoadingAnalytics) && (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -179,9 +181,9 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Key Metrics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {/* Total Revenue */}
           <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
             <div className="flex items-center justify-between">
@@ -292,7 +294,7 @@ const Dashboard = () => {
         </div>
 
         {/* Status Overview */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -489,84 +491,6 @@ const Dashboard = () => {
               </div>
             </>
           )}
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            <button className="flex items-center gap-3 p-3 sm:p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                  />
-                </svg>
-              </div>
-              <div className="text-left min-w-0">
-                <p className="font-medium text-gray-900 text-sm sm:text-base">Add New Room</p>
-                <p className="text-xs sm:text-sm text-gray-600">
-                  Create a new room listing
-                </p>
-              </div>
-            </button>
-
-            <button className="flex items-center gap-3 p-3 sm:p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                  />
-                </svg>
-              </div>
-              <div className="text-left min-w-0">
-                <p className="font-medium text-gray-900 text-sm sm:text-base">Manage Bookings</p>
-                <p className="text-xs sm:text-sm text-gray-600">
-                  View and manage all bookings
-                </p>
-              </div>
-            </button>
-
-            <button className="flex items-center gap-3 p-3 sm:p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors sm:col-span-2 lg:col-span-1">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <svg
-                  className="w-4 h-4 sm:w-5 sm:h-5 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-              </div>
-              <div className="text-left min-w-0">
-                <p className="font-medium text-gray-900 text-sm sm:text-base">View Messages</p>
-                <p className="text-xs sm:text-sm text-gray-600">Check guest messages</p>
-              </div>
-            </button>
-          </div>
         </div>
       </div>
     </div>
