@@ -65,7 +65,7 @@ const AddRoom = () => {
 
       // Converting amenities to array & keep only enabled amenities
       const amenities = Object.keys(inputs.amenities).filter(
-        (key) => inputs.amenities[key]
+        (key) => inputs.amenities[key],
       );
       formData.append("amenities", JSON.stringify(amenities));
 
@@ -137,37 +137,24 @@ const AddRoom = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-light text-gray-900 tracking-tight mb-2">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900 tracking-tight">
                 Add New Room
               </h1>
-              <p className="text-base sm:text-lg text-gray-500 font-light">
+              <p className="text-sm sm:text-base text-gray-500 mt-1">
                 Create a new room listing for your hotel
               </p>
             </div>
             <div className="flex items-center gap-4 sm:gap-6">
-              <div className="text-center sm:text-right">
-                <p className="text-xs sm:text-sm text-gray-500">
-                  All fields are required
+              <div className="hidden sm:block text-right">
+                <p className="text-xs text-gray-400 uppercase tracking-widest font-medium">
+                  Fields
                 </p>
-              </div>
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
-                <svg
-                  className="w-4 h-4 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                <span className="hidden sm:inline">Required Fields</span>
+                <p className="text-sm font-semibold text-gray-600">
+                  All are required
+                </p>
               </div>
             </div>
           </div>
@@ -204,7 +191,7 @@ const AddRoom = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               {Object.keys(images).map((key) => (
                 <div key={key} className="relative group">
                   <label
@@ -443,7 +430,7 @@ const AddRoom = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {Object.keys(inputs.amenities).map((amenity, index) => (
                 <label
                   key={index}
@@ -533,7 +520,7 @@ const AddRoom = () => {
                 <div className="mb-4">
                   <img
                     src={getImagePreview(
-                      Object.values(images).find((img) => img)
+                      Object.values(images).find((img) => img),
                     )}
                     alt="Room preview"
                     className="w-full h-48 object-cover rounded-lg"

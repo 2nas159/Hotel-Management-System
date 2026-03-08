@@ -10,20 +10,26 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="md:w-64 w-16 border-r h-full text-base border-gray-300 pt-4 flex flex-col transition-all duration-300">
+    <div className="w-full md:w-64 border-b md:border-b-0 md:border-r h-auto md:h-full bg-white text-base border-gray-200 flex md:flex-col overflow-x-auto md:overflow-y-auto no-scrollbar transition-all duration-300">
       {sidebarLinks.map((item, index) => (
         <NavLink
           to={item.path}
           key={index}
-          end="/owner"
+          end={item.path === "/owner"}
           className={({ isActive }) =>
-            `flex items-center py-3 px-4 md:px-8 gap-3 ${
-              isActive ? "border-r-4 md:border-r-[6px] bg-blue-600/10 border-blue-600 text-blue-600" : "hover:bg-gray-100/90 border-white text-gray-700"
+            `flex items-center py-3 px-6 md:px-8 gap-3 whitespace-nowrap transition-all border-b-2 md:border-b-0 md:border-r-[6px] ${
+              isActive
+                ? "bg-blue-600/5 border-blue-600 text-blue-600 font-medium"
+                : "border-transparent text-gray-600 hover:bg-gray-50"
             }`
           }
         >
-          <img src={item.icon} alt={item.name} className="min-h-6 min-w-6" />
-          <p className="hidden md:block text-center">{item.name}</p>
+          <img
+            src={item.icon}
+            alt={item.name}
+            className="w-5 h-5 md:w-6 md:h-6"
+          />
+          <p className="text-sm md:text-base">{item.name}</p>
         </NavLink>
       ))}
     </div>

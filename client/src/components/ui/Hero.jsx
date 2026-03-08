@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { assets, cities } from "../../assets/assets";
 import { useAppContext } from "../../context/AppContext";
-import SearchSuggestions from "../search/SearchSuggestions"
+import SearchSuggestions from "../search/SearchSuggestions";
 
 const Hero = () => {
-  const { navigate, getToken, axios, setSearchedCities, searchedCities } = useAppContext();
+  const { navigate, getToken, axios, setSearchedCities, searchedCities } =
+    useAppContext();
   const [destination, setDestination] = useState("");
 
   const onSearch = async (e) => {
@@ -28,25 +29,34 @@ const Hero = () => {
 
   return (
     <div className='flex flex-col items-start justify-center px-6 md:px-16 lg:px-24 xl:px-32 text-white bg-[url("/src/assets/heroImage.png")] bg-no-repeat bg-cover bg-center h-screen'>
-      <p className="bg-[#49B9FF]/50 px-3.5 py-1 rounded-full mt-20">
+      <p className="bg-[#49B9FF]/50 px-3.5 py-1 rounded-full mt-20 text-xs md:text-sm">
         The Ultimate Hotel Experience
       </p>
-      <h1 className="font-playfair text-2xl md:text-5xl md:text-[56px] md:leading-[56px] font-bold md:font-extrabold max-w-xl mt-4">
+      <h1 className="font-playfair text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold md:font-extrabold max-w-xl mt-4 leading-tight">
         Discover Your Perfect Gateway Destination
       </h1>
-      <p className="max-w-130 mt-2 text-sm md:text-base">
+      <p className="max-w-130 mt-3 text-sm md:text-base text-white/90">
         Unparalleled luxury and comfort await at the world's most exclusive
         hotels and resorts. Start your journey today.
       </p>
 
       <form
         onSubmit={onSearch}
-        className="mt-8 bg-white text-gray-500 rounded-lg px-6 py-4  flex flex-col md:flex-row max-md:items-start gap-4 max-md:mx-auto"
+        className="mt-8 bg-white text-gray-500 rounded-xl shadow-lg p-5 md:p-6 lg:p-8 flex flex-col md:flex-row items-stretch md:items-center gap-4 lg:gap-6 w-full max-w-5xl"
       >
-        <div>
-          <div className="flex items-center gap-2">
-            <img src={assets.calenderIcon} alt="calendar" className="h-4" />
-            <label htmlFor="destinationInput">Destination</label>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1.5">
+            <img
+              src={assets.calenderIcon}
+              alt="calendar"
+              className="h-4 opacity-70"
+            />
+            <label
+              htmlFor="destinationInput"
+              className="text-xs font-semibold uppercase tracking-wider"
+            >
+              Destination
+            </label>
           </div>
           <SearchSuggestions
             value={destination}
@@ -54,51 +64,79 @@ const Hero = () => {
             onSelect={(selectedDestination) => {
               setDestination(selectedDestination);
             }}
-            placeholder="Type here"
+            placeholder="Where are you going?"
             recentSearches={searchedCities}
             popularDestinations={cities}
           />
         </div>
 
-        <div>
-          <div className="flex items-center gap-2">
-            <img src={assets.calenderIcon} alt="calendar" className="h-4" />
-
-            <label htmlFor="checkIn">Check in</label>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1.5">
+            <img
+              src={assets.calenderIcon}
+              alt="calendar"
+              className="h-4 opacity-70"
+            />
+            <label
+              htmlFor="checkIn"
+              className="text-xs font-semibold uppercase tracking-wider"
+            >
+              Check in
+            </label>
           </div>
           <input
             id="checkIn"
             type="date"
-            className=" rounded border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none"
+            className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black transition-all"
           />
         </div>
 
-        <div>
-          <div className="flex items-center gap-2">
-            <img src={assets.calenderIcon} alt="calendar" className="h-4" />
-            <label htmlFor="checkOut">Check out</label>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1.5">
+            <img
+              src={assets.calenderIcon}
+              alt="calendar"
+              className="h-4 opacity-70"
+            />
+            <label
+              htmlFor="checkOut"
+              className="text-xs font-semibold uppercase tracking-wider"
+            >
+              Check out
+            </label>
           </div>
           <input
             id="checkOut"
             type="date"
-            className=" rounded border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none"
+            className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black transition-all"
           />
         </div>
 
-        <div className="flex md:flex-col max-md:gap-2 max-md:items-center">
-          <label htmlFor="guests">Guests</label>
+        <div className="w-full md:w-24">
+          <div className="flex items-center gap-2 mb-1.5">
+            <label
+              htmlFor="guests"
+              className="text-xs font-semibold uppercase tracking-wider"
+            >
+              Guests
+            </label>
+          </div>
           <input
             min={1}
-            max={4}
+            max={10}
             id="guests"
             type="number"
-            className=" rounded border border-gray-200 px-3 py-1.5 mt-1.5 text-sm outline-none  max-w-16"
+            className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-black transition-all"
             placeholder="0"
           />
         </div>
 
-        <button className="flex items-center justify-center gap-1 rounded-md bg-black py-3 px-4 text-white my-auto cursor-pointer max-md:w-full max-md:py-1">
-          <img src={assets.searchIcon} alt="search" className="h-7" />
+        <button className="flex items-center justify-center gap-2 rounded-md bg-black py-3 px-6 text-white font-medium hover:bg-gray-800 active:scale-[0.98] transition-all cursor-pointer mt-2 md:mt-auto">
+          <img
+            src={assets.searchIcon}
+            alt="search"
+            className="h-5 brightness-0 invert"
+          />
           <span>Search</span>
         </button>
       </form>

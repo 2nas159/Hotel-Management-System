@@ -1,4 +1,3 @@
-import logo from './logo.svg'
 import searchIcon from './searchIcon.svg'
 import userIcon from './userIcon.svg'
 import calenderIcon from './calenderIcon.svg'
@@ -39,6 +38,8 @@ import totalBookingIcon from "./totalBookingIcon.svg";
 import totalRevenueIcon from "./totalRevenueIcon.svg";
 import messagesIcon from "./messagesIcon.svg";
 import airConditioningIcon from "./airConditioningIcon.svg";
+import logo from "./logo.png";
+import icon from "./icon.png";
 
 
 export const assets = {
@@ -76,6 +77,7 @@ export const assets = {
     totalRevenueIcon,
     messagesIcon,
     airConditioningIcon,
+    icon,
 }
 
 export const cities = [

@@ -43,20 +43,18 @@ const Navbar = () => {
   const { user, navigate, isOwner, setShowHotelReg } = useAppContext();
 
   useEffect(() => {
-    if (location.pathname !== "/") {
-      setIsScrolled(true);
-      return;
-    } else {
-      setIsScrolled(false);
-    }
-    setIsScrolled((prev) => (location.pathname !== "/" ? true : prev));
-
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+      if (location.pathname !== "/") {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(window.scrollY > 10);
+      }
     };
+
+    handleScroll();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [location.pathname]);
 
   const handleSearchClick = () => {
     setIsSearchOpen(true);

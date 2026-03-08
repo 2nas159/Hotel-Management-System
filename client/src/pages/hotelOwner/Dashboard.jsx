@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Title from "../../components/ui/Title";
 import { useAppContext } from "../../context/AppContext";
 import { assets } from "../../assets/assets";
@@ -29,11 +29,12 @@ const Dashboard = () => {
   const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setIsLoadingDashboard(true);
+      const token = await getToken();
       const { data } = await axios.get("/api/bookings/hotel", {
-        headers: { Authorization: `Bearer ${await getToken()}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
       if (data.success) {
         setDashboardData(data.dashboardData);
@@ -46,11 +47,12 @@ const Dashboard = () => {
     } finally {
       setIsLoadingDashboard(false);
     }
-  };
+  }, [axios, getToken, toast]);
 
-  const fetchAnalyticsData = async () => {
+  const fetchAnalyticsData = useCallback(async () => {
     try {
       setIsLoadingAnalytics(true);
+      const token = await getToken();
 
       // Fetch real analytics data from API endpoints
       const [
@@ -60,16 +62,16 @@ const Dashboard = () => {
         roomTypeResponse,
       ] = await Promise.allSettled([
         axios.get("/api/analytics/revenue", {
-          headers: { Authorization: `Bearer ${await getToken()}` },
+          headers: { Authorization: `Bearer ${token}` },
         }),
         axios.get("/api/analytics/bookings", {
-          headers: { Authorization: `Bearer ${await getToken()}` },
+          headers: { Authorization: `Bearer ${token}` },
         }),
         axios.get("/api/analytics/occupancy", {
-          headers: { Authorization: `Bearer ${await getToken()}` },
+          headers: { Authorization: `Bearer ${token}` },
         }),
         axios.get("/api/analytics/room-types", {
-          headers: { Authorization: `Bearer ${await getToken()}` },
+          headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
 
@@ -108,17 +110,17 @@ const Dashboard = () => {
     } finally {
       setIsLoadingAnalytics(false);
     }
-  };
+  }, [axios, getToken, toast]);
 
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
     await Promise.all([fetchDashboardData(), fetchAnalyticsData()]);
-  };
+  }, [fetchDashboardData, fetchAnalyticsData]);
 
   useEffect(() => {
     if (user) {
       refreshData();
     }
-  }, [user]);
+  }, [user, refreshData]);
 
   // Calculate additional metrics
   const averageBookingValue =
@@ -129,14 +131,14 @@ const Dashboard = () => {
   const confirmationRate =
     dashboardData.totalBookings > 0
       ? Math.round(
-          (dashboardData.confirmedBookings / dashboardData.totalBookings) * 100
+          (dashboardData.confirmedBookings / dashboardData.totalBookings) * 100,
         )
       : 0;
 
   const cancellationRate =
     dashboardData.totalBookings > 0
       ? Math.round(
-          (dashboardData.cancelledBookings / dashboardData.totalBookings) * 100
+          (dashboardData.cancelledBookings / dashboardData.totalBookings) * 100,
         )
       : 0;
 
@@ -147,34 +149,53 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
             <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-light text-gray-900 tracking-tight mb-2">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900 tracking-tight">
                 Hotel Dashboard
               </h1>
-              <p className="text-base sm:text-lg text-gray-500 font-light">
-                Welcome back! Here's your hotel performance overview.
+              <p className="text-sm sm:text-base text-gray-500 mt-1">
+                Welcome back, {user?.firstName || "Owner"}!
               </p>
             </div>
-            <div className="flex items-center gap-4 sm:gap-6">
+            <div className="flex items-center justify-between sm:justify-end gap-4">
               {lastUpdated && (
-                <div className="text-center sm:text-right">
-                  <p className="text-xs sm:text-sm text-gray-500">
-                    Last updated: {lastUpdated.toLocaleTimeString()}
+                <div className="hidden xs:block">
+                  <p className="text-[10px] sm:text-xs text-gray-400 uppercase tracking-widest font-medium">
+                    Last sync
+                  </p>
+                  <p className="text-xs sm:text-sm text-gray-600 font-semibold italic">
+                    {lastUpdated.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </p>
                 </div>
               )}
               <button
                 onClick={refreshData}
                 disabled={isLoadingDashboard || isLoadingAnalytics}
-                className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base font-medium"
+                className="flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50 text-sm font-semibold shadow-sm"
               >
-                {(isLoadingDashboard || isLoadingAnalytics) && (
+                {isLoadingDashboard || isLoadingAnalytics ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
                 )}
-                <span className="hidden sm:inline">Refresh Data</span>
-                <span className="sm:hidden">Refresh</span>
+                <span>Refresh</span>
               </button>
             </div>
           </div>
@@ -183,7 +204,7 @@ const Dashboard = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         {/* Key Metrics Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
           {/* Total Revenue */}
           <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
             <div className="flex items-center justify-between">
@@ -194,7 +215,9 @@ const Dashboard = () => {
                 <p className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
                   {currency} {dashboardData.totalRevenue.toLocaleString()}
                 </p>
-                <p className="text-xs sm:text-sm text-gray-500 mt-1">All time earnings</p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                  All time earnings
+                </p>
               </div>
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <img
@@ -240,7 +263,9 @@ const Dashboard = () => {
                 <p className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
                   {currency} {averageBookingValue}
                 </p>
-                <p className="text-xs sm:text-sm text-gray-500 mt-1">Per booking</p>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                  Per booking
+                </p>
               </div>
               <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
                 <svg
@@ -382,8 +407,8 @@ const Dashboard = () => {
                           booking.status === "confirmed"
                             ? "bg-green-500"
                             : booking.status === "pending"
-                            ? "bg-yellow-500"
-                            : "bg-red-500"
+                              ? "bg-yellow-500"
+                              : "bg-red-500"
                         }`}
                       ></div>
                       <div className="flex-1 min-w-0">
@@ -445,7 +470,9 @@ const Dashboard = () => {
               {analyticsData.isSampleData && (
                 <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
                   <div className="flex items-start gap-3">
-                    <div className="text-blue-500 text-lg sm:text-xl flex-shrink-0">ℹ️</div>
+                    <div className="text-blue-500 text-lg sm:text-xl flex-shrink-0">
+                      ℹ️
+                    </div>
                     <div>
                       <h4 className="font-medium text-blue-900 mb-1 text-sm sm:text-base">
                         Sample Analytics Data
